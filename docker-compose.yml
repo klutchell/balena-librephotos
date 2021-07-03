@@ -1,0 +1,69 @@
+version: "2.1"
+
+services:
+  proxy:
+    image: radicand/librephotos-proxy-arm@sha256:64127b27423045398601c8837cdcb924e5cc858a28f1e7c4aeb3789b6fc3d296
+    volumes:
+      - data:/data
+      - protected:/protected_media
+    ports:
+      - 80:80/tcp
+    depends_on:
+      - backend
+      - frontend
+
+  db:
+    image: postgres:13.3-alpine
+    environment:
+      - POSTGRES_USER=librephotos
+      - POSTGRES_PASSWORD=librephotos
+      - POSTGRES_DB=librephotos
+    volumes:
+      - db:/var/lib/postgresql/data
+    command: postgres -c fsync=off -c synchronous_commit=off -c full_page_writes=off -c random_page_cost=1.0
+
+  frontend:
+    image: radicand/librephotos-frontend-arm@sha256:e19994a5bdf39089e5d0038d2cfa4fe947a81044e0ca1457cea26b1d62ac67a0
+    depends_on:
+      - backend
+
+  backend:
+    # image: radicand/librephotos-backend-arm@sha256:dde1ff976055a82ad362ec5a549dfe556b736e49c44986814067bd6d17a19c7f
+    build: backend
+    volumes:
+      - data:/data
+      - protected:/protected_media
+      - logs:/logs
+      - cache:/root/.cache
+    environment:
+      - BACKEND_HOST=backend
+      - DB_BACKEND=postgresql
+      - DB_NAME=librephotos
+      - DB_USER=librephotos
+      - DB_PASS=librephotos
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - WEB_CONCURRENCY=2
+      - DEBUG=0
+      - ADMIN_EMAIL=admin@example.com
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=balena
+      - SECRET_KEY=L00jbbDn4dcFfWibk7ML
+      - TIME_ZONE=America/Toronto
+      - HEAVYWEIGHT_PROCESS=1
+    depends_on:
+      - db
+    labels:
+      - io.balena.features.supervisor-api=1
+
+  redis:
+    image: redis:6.2.4-alpine
+
+volumes:
+  data:
+  protected:
+  logs:
+  cache:
+  db:
