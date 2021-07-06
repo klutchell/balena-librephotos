@@ -35,6 +35,7 @@ services:
       - protected:/protected_media
       - logs:/logs
       - cache:/root/.cache
+      - scan:/scan
     environment:
       - BACKEND_HOST=backend
       - DB_BACKEND=postgresql
@@ -67,3 +68,4 @@ volumes:
   logs:
   cache:
   db:
+  scan:
